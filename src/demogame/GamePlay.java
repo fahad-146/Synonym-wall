@@ -16,8 +16,8 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
     private int delay=8;
     private int ballposX=410;
     private int ballposY=630;
-    private int ballXdir=-1;
-    private int ballYdir=-2;
+    private int ballXdir=-2;
+    private int ballYdir=-4;
     private int playerX=350;
     private MapGenerator map;
 
@@ -68,29 +68,41 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
             g.drawString("GAME OVER !!  Score: "+score,200,350);
             g.drawString("Press Enter to restart the game", 200,450);
         }
+
+        //game won
+        if(totalBricks<=0){
+            play=false;
+            ballXdir=0;
+            ballYdir=0;
+
+            g.setColor(Color.green);
+            g.setFont(new Font("serif", Font.BOLD,30));
+            g.drawString("Won this stage, great !!  Score: "+score,200,350);
+            g.drawString("Press Enter to restart the game", 200,450);
+        }
     }
 
     private void moveLeft(){
         play=true;
-        playerX-=20;
+        playerX-=30;
 
     }
     private void moveRight(){
         play=true;
-        playerX+=20;
+        playerX+=30;
     }
 
     @Override
     public void keyPressed(KeyEvent e) {
         if(e.getKeyCode()==KeyEvent.VK_LEFT){
-            if(playerX<=0)
-                playerX=0;
+            if(playerX<=5)
+                playerX=5;
             else
                 moveLeft();
         }
         if(e.getKeyCode()==KeyEvent.VK_RIGHT){
-            if(playerX>=650){
-                playerX=650;
+            if(playerX>=600){
+                playerX=600;
             }
             else
                 moveRight();
@@ -102,9 +114,9 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
                 totalBricks=21;
                 ballposX=410;
                 ballposY=630;
-                ballXdir=-1;
-                ballYdir=-2;
-                playerX=320;
+                ballXdir=-2;
+                ballYdir=-4;
+                playerX=350;
 
 
                 map = new MapGenerator(3,7);
@@ -114,43 +126,51 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
 
     }
 
+
     @Override
+
+
+
     public void actionPerformed(ActionEvent e) {
-        if(play){
+        if (play) {
+            if (ballposX <= 5) ballXdir = -ballXdir;
+            if (ballposY <= 10) ballYdir = -ballYdir;
+            if (ballposX >= 657) ballXdir = -ballXdir;
+            if (ballposY >= 700) play = false;
 
-            if(ballposX<=0){
-                ballXdir=-ballXdir;
-            }
-            if(ballposY<=0){
-                ballYdir=-ballYdir;
-            }
-            if(ballposX>=680){
-                ballXdir=-ballXdir;
-            }
-            if(ballposY>=700){
-                play=false;
+            Rectangle ballRect = new Rectangle(ballposX, ballposY, 20, 20);
+            Rectangle paddleRect = new Rectangle(playerX, 650, 100, 8);
+
+            if (ballRect.intersects(paddleRect)) {
+                // Calculate where the ball hit the paddle
+                int paddleCenter = playerX + 50; // Center of the paddle
+                int ballCenter = ballposX + 10; // Center of the ball
+                int hitPosition = ballCenter - paddleCenter;
+
+                // Normalize hit position to a range between -1 and 1
+                double normalizedHitPosition = (double) hitPosition / 50.0;
+
+                // Adjust the ball's X direction based on the hit position
+                ballXdir = (int) (normalizedHitPosition * 4);
+                ballYdir = -ballYdir;
             }
 
-            Rectangle ballRect = new Rectangle(ballposX,ballposY,20,20);
-            Rectangle paddleRect = new Rectangle(playerX,650,100,8);
-
-            if(ballRect.intersects(paddleRect)){
-                ballYdir=-ballYdir;
-            }
-            A:for(int i=0; i<map.map.length;i++){
-                for(int j=0; j<map.map[0].length; j++){
-                    if(map.map[i][j]>0){
+            // Check brick collisions
+            A: for (int i = 0; i < map.map.length; i++) {
+                for (int j = 0; j < map.map[0].length; j++) {
+                    if (map.map[i][j] > 0) {
                         int width = map.brickWidth;
                         int height = map.brickHeight;
-                        int brickXpos= j*width+80;
-                        int brickYpos = i*height+50;
+                        int brickXpos = j * width + 80;
+                        int brickYpos = i * height + 50;
 
                         Rectangle brickRect = new Rectangle(brickXpos, brickYpos, width, height);
-                        if(ballRect.intersects(brickRect)){
-                            map.setBrick(0,i,j);
+                        if (ballRect.intersects(brickRect)) {
+                            map.setBrick(0, i, j);
                             totalBricks--;
-                            score+=5;
+                            score += 5;
 
+                            // Determine the collision side
                             if(ballposX+19<=brickXpos || ballposX+1>brickXpos+width)
                                 ballXdir=-ballXdir;
                             else ballYdir=-ballYdir;
@@ -159,14 +179,17 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
                         }
                     }
                 }
+
             }
 
-            ballposX+=ballXdir;
-            ballposY+=ballYdir;
+            ballposX += ballXdir;
+            ballposY += ballYdir;
         }
         repaint();
-
     }
+
+
+
 
     @Override
     public void keyTyped(KeyEvent e) {
