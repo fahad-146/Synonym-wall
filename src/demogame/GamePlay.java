@@ -11,13 +11,13 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
 
     private boolean play=false;
     private int score=0;
-    private int totalBricks=21;
+    private int totalBricks=15;
     private Timer timer;
     private int delay=8;
     private int ballposX=410;
     private int ballposY=630;
-    private int ballXdir=-2;
-    private int ballYdir=-4;
+    private int ballXdir=-3;
+    private int ballYdir=-6;
     private int playerX=350;
     private MapGenerator map;
 
@@ -111,15 +111,15 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
         if(e.getKeyCode()==KeyEvent.VK_ENTER){
             if(!play){
                 score=0;
-                totalBricks=21;
+                totalBricks=15;
                 ballposX=410;
                 ballposY=630;
-                ballXdir=-2;
-                ballYdir=-4;
+                ballXdir=-3;
+                ballYdir=-6;
                 playerX=350;
 
 
-                map = new MapGenerator(3,7);
+                map = new MapGenerator(3,5);
             }
         }
         repaint();
