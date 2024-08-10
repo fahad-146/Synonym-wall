@@ -152,7 +152,10 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
 
                 // Adjust the ball's X direction based on the hit position
                 ballXdir = (int) (normalizedHitPosition * 4);
-                ballYdir = -ballYdir;
+                if(hitPosition==0){
+                    ballYdir= -ballYdir*50;
+                }
+                else ballYdir = -ballYdir;
             }
 
             // Check brick collisions
