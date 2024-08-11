@@ -6,6 +6,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.util.ArrayList;
+import java.util.HashMap;
 
 public class GamePlay extends JPanel implements ActionListener, KeyListener {
 
@@ -16,12 +18,17 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
     private int delay=8;
     private int ballposX=410;
     private int ballposY=630;
-    private int ballXdir=-3;
-    private int ballYdir=-6;
+    private int ballXdir=-1;
+    private int ballYdir=-2;
     private int playerX=350;
     private MapGenerator map;
+    private String chosenWord;
+    private ArrayList<FallingWord> fallingWords;
+    private WordBank wordBank;
+    private ArrayList<String> synonyms;
 
     public GamePlay(){
+        wordBank = new WordBank();
         addKeyListener(this);
         setFocusable(true);
         setFocusTraversalKeysEnabled(true);
@@ -29,7 +36,11 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
         timer = new Timer(delay, this);
         timer.start();
 
-        map=new MapGenerator(3,5);
+        chosenWord = wordBank.getRandomWord();
+        synonyms = wordBank.getWordMap().get(chosenWord);
+        map=new MapGenerator(3,5,chosenWord, synonyms, wordBank.getWordMap());
+
+        fallingWords = new ArrayList<>();
 
     }
     public void paint(Graphics g){
@@ -50,12 +61,22 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
         g.setColor(Color.RED);
         g.fillOval(ballposX,ballposY,20,20);
 
+        // Display the current game word at the top
+        g.setColor(Color.green);
+        g.setFont(new Font("Serif", Font.BOLD, 20));
+        g.drawString("Current Word: " + chosenWord, 20, 30);
+
         //bricks
         map.draw((Graphics2D)g);
 
+        //score
         g.setColor(Color.green);
         g.setFont(new Font("Serif", Font.BOLD,20));
         g.drawString("SCORE :"+ score, 550, 30);
+
+        for (FallingWord word : fallingWords) {
+            word.draw(g);
+        }
 
         //game over
         if(ballposY>665){
@@ -114,12 +135,12 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
                 totalBricks=15;
                 ballposX=410;
                 ballposY=630;
-                ballXdir=-3;
-                ballYdir=-6;
+                ballXdir=-1;
+                ballYdir=-2;
                 playerX=350;
 
 
-                map = new MapGenerator(3,5);
+                map = new MapGenerator(3,5,chosenWord, synonyms, wordBank.getWordMap());
             }
         }
         repaint();
@@ -129,8 +150,6 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
 
     @Override
 
-
-
     public void actionPerformed(ActionEvent e) {
         if (play) {
             if (ballposX <= 5) ballXdir = -ballXdir;
@@ -138,8 +157,29 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
             if (ballposX >= 657) ballXdir = -ballXdir;
             if (ballposY >= 700) play = false;
 
-            Rectangle ballRect = new Rectangle(ballposX, ballposY, 20, 20);
+            // Update falling words
+            for (FallingWord word : fallingWords) {
+                word.update();
+            }
+
+            // Check if the paddle catches a word
             Rectangle paddleRect = new Rectangle(playerX, 650, 100, 8);
+            for (int i = 0; i < fallingWords.size(); i++) {
+                FallingWord word = fallingWords.get(i);
+                if (word.getY() >= 650 && paddleRect.intersects(word.getBounds())) {
+                    // Check if it's a correct word
+                    if (word.isSynonym()) {
+                        score += 10;
+                    } else {
+                        score -= 5;
+                    }
+                    fallingWords.remove(i);
+                    i--;
+                }
+            }
+
+            Rectangle ballRect = new Rectangle(ballposX, ballposY, 20, 20);
+//            Rectangle paddleRect = new Rectangle(playerX, 650, 100, 8);
 
             if (ballRect.intersects(paddleRect)) {
                 // Calculate where the ball hit the paddle
@@ -173,6 +213,9 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
                             totalBricks--;
                             score += 5;
 
+                            // Start the word falling
+                            fallingWords.add(new FallingWord(map.getWord(i, j), brickXpos + width / 2, brickYpos + height, checkSynonym(synonyms,map.getWord(i,j))));
+
                             // Determine the collision side
                             if(ballposX+19<=brickXpos || ballposX+1>brickXpos+width)
                                 ballXdir=-ballXdir;
@@ -191,11 +234,12 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
         repaint();
     }
 
-
-
-
-
-
+    private boolean checkSynonym(ArrayList<String> synonyms, String word) {
+        for(String w: synonyms){
+            if(w.equals(word)) return true;
+        }
+        return false;
+    }
 
 
     @Override
