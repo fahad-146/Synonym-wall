@@ -18,8 +18,8 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
     private int delay=8;
     private int ballposX=410;
     private int ballposY=630;
-    private int ballXdir=-1;
-    private int ballYdir=-2;
+    private int ballXdir=-3;
+    private int ballYdir=-3;
     private int playerX=350;
     private MapGenerator map;
     private String chosenWord;
@@ -88,6 +88,8 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
             g.setFont(new Font("serif", Font.BOLD,30));
             g.drawString("GAME OVER !!  Score: "+score,200,350);
             g.drawString("Press Enter to restart the game", 200,450);
+
+            displaySynonyms(g);
         }
 
         //game won
@@ -100,6 +102,20 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
             g.setFont(new Font("serif", Font.BOLD,30));
             g.drawString("Won this stage, great !!  Score: "+score,200,350);
             g.drawString("Press Enter to restart the game", 200,450);
+
+            displaySynonyms(g);
+
+        }
+    }
+
+    private void displaySynonyms(Graphics g) {
+        g.setColor(Color.YELLOW);
+        g.setFont(new Font("Serif", Font.BOLD, 20));
+        g.drawString("Correct Synonyms:", 200, 500);
+
+        g.setFont(new Font("Serif", Font.BOLD, 16));
+        for (int i = 0; i < synonyms.size(); i++) {
+            g.drawString("- " + synonyms.get(i), 200, 530 + i * 20);
         }
     }
 
@@ -135,12 +151,22 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
                 totalBricks=15;
                 ballposX=410;
                 ballposY=630;
-                ballXdir=-1;
-                ballYdir=-2;
-                playerX=350;
+                ballXdir=-3;
+                ballYdir=-3;
 
 
-                map = new MapGenerator(3,5,chosenWord, synonyms, wordBank.getWordMap());
+                // Choose a new word
+                chosenWord = wordBank.getRandomWord();
+                synonyms = wordBank.getWordMap().get(chosenWord);
+
+                // Reinitialize the map with the new word
+                map = new MapGenerator(3, 5, chosenWord, synonyms, wordBank.getWordMap());
+
+                // Reset the falling words list
+                fallingWords.clear();
+
+
+
             }
         }
         repaint();
@@ -193,7 +219,7 @@ public class GamePlay extends JPanel implements ActionListener, KeyListener {
                 // Adjust the ball's X direction based on the hit position
                 ballXdir = (int) (normalizedHitPosition * 4);
                 if(hitPosition==0){
-                    ballYdir= -ballYdir*50;
+                    ballYdir = -ballYdir ;
                 }
                 else ballYdir = -ballYdir;
             }
